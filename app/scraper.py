@@ -14,7 +14,7 @@ HEADERS = {
 }
 
 # SQLiteデータベースのパス（Docker内）
-DB_PATH = "/app/data/reviews.db"
+DB_PATH = os.path.join(os.getcwd(), "app/data/reviews.db")
 
 # SQLite にデータを保存する関数
 def save_to_sqlite(reviews):

@@ -39,7 +39,6 @@ jobs:
           lftp -d -e "
           set sftp:auto-confirm yes;
           open -p 2222 -u $LOLI_SFTP_USER,$LOLI_SFTP_PASSWORD sftp://$LOLI_SFTP_HOST;
-          mkdir -p web/data;
           cd web/data;
-          put -O reviews.db ../../reviews.db;
+          put ../../data/reviews.db reviews.db;
           bye"

@@ -13,11 +13,14 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 }
 
-# SQLiteデータベースのパス（Docker内）
+# SQLiteデータベースのパス
 DB_PATH = os.path.join(os.getcwd(), "data/reviews.db")
 
 # SQLite にデータを保存する関数
 def save_to_sqlite(reviews):
+    # dataフォルダがない場合は作成
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -37,7 +40,6 @@ def save_to_sqlite(reviews):
 
     # データ挿入
     for item in reviews:
-        # スコアを float 型に変換（"N/A" なら NULL）
         try:
             rating = float(item["score"]) if item["score"] != "N/A" else None
         except ValueError:

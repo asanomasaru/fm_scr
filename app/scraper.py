@@ -13,45 +13,56 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 }
 
-# SQLiteデータベースのパス
-DB_PATH = os.path.join(os.getcwd(), "data/reviews.db")
+# SQLiteデータベースのパス（絶対パスを取得）
+DB_PATH = os.path.abspath("data/reviews.db")
+
+# デバッグ用ログ
+print(f"データベースパス: {DB_PATH}")
+
+# ディレクトリがない場合は作成
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 # SQLite にデータを保存する関数
 def save_to_sqlite(reviews):
-    # dataフォルダがない場合は作成
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    print("データを SQLite に保存開始")
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
 
-    # テーブル作成（存在しない場合のみ）
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reviews (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            review TEXT,
-            rating REAL,
-            url TEXT
-        )
-    """)
+        # テーブル作成（存在しない場合のみ）
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT,
+                review TEXT,
+                rating REAL,
+                url TEXT
+            )
+        """)
 
-    # 既存データをクリア（毎回上書き）
-    cursor.execute("DELETE FROM reviews")
+        # 既存データをクリア（毎回上書き）
+        cursor.execute("DELETE FROM reviews")
 
-    # データ挿入
-    for item in reviews:
-        try:
-            rating = float(item["score"]) if item["score"] != "N/A" else None
-        except ValueError:
-            rating = None
+        # データ挿入
+        for item in reviews:
+            try:
+                rating = float(item["score"]) if item["score"] != "N/A" else None
+            except ValueError:
+                rating = None
 
-        cursor.execute(
-            "INSERT INTO reviews (title, review, rating, url) VALUES (?, ?, ?, ?)", 
-            (item["title"], item["review"], rating, item["url"])
-        )
+            cursor.execute(
+                "INSERT INTO reviews (title, review, rating, url) VALUES (?, ?, ?, ?)", 
+                (item["title"], item["review"], rating, item["url"])
+            )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+
+        print(f"SQLite 保存完了！ {len(reviews)} 件のレビューを保存しました")
+    
+    except sqlite3.Error as e:
+        print(f"SQLite エラー: {e}")
 
 # 収集したレビューを保存するリスト
 all_reviews = []
@@ -112,5 +123,7 @@ while page_url:
 # 取得したデータを SQLite に保存
 save_to_sqlite(all_reviews)
 
-print(f"レビュー取得完了！ {len(all_reviews)}件のレビューを SQLite に保存しました。")
+# デバッグ用に最終確認
+print(f"レビュー取得完了！ {len(all_reviews)} 件のレビューを SQLite に保存しました。")
 print(f"データベース: {DB_PATH}")
+print(f"データベースファイルが存在するか: {os.path.exists(DB_PATH)}")

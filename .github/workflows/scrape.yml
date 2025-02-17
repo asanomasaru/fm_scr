@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: スクレイピングを実行
-        run: python filmarks_scraping/scraper.py
+        run: python app/scraper.py
 
       - name: レンタルサーバーに `reviews.db` をアップロード
         env:
@@ -30,4 +30,9 @@ jobs:
           LOLI_SFTP_PASSWORD: ${{ secrets.LOLI_SFTP_PASSWORD }}
         run: |
           sudo apt-get install -y lftp
-          lftp -e "set sftp:auto-confirm yes; open -u $LOLI_SFTP_USER,$LOLI_SFTP_PASSWORD sftp://$LOLI_SFTP_HOST; put -O /path/to/htdocs/data/ filmarks_scraping/data/reviews.db; bye"
+          lftp -e "set sftp:auto-confirm yes; open -u $LOLI_SFTP_USER,$LOLI_SFTP_PASSWORD sftp://$LOLI_SFTP_HOST; put -O /path/to/htdocs/data/ app/data/reviews.db; bye"
+
+env:
+  LOLI_SFTP_HOST: ${{ secrets.LOLI_SFTP_HOST }}
+  LOLI_SFTP_USER: ${{ secrets.LOLI_SFTP_USER }}
+  LOLI_SFTP_PASSWORD: ${{ secrets.LOLI_SFTP_PASSWORD }}

@@ -1,0 +1,21 @@
+# 軽量なPython環境を使用
+FROM python:3.10-slim
+
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# 必要なパッケージをインストール
+RUN apt-get update && apt-get install -y sqlite3
+
+# 依存関係をインストール
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# スクリプトをコピー
+COPY scraper.py .
+
+# データフォルダを作成
+RUN mkdir -p /app/data
+
+# スクリプトを実行（エントリーポイント）
+CMD ["python", "scraper.py"]

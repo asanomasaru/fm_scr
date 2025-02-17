@@ -26,6 +26,9 @@ jobs:
       - name: スクレイピングを実行
         run: python app/scraper.py
 
+      - name: SQLiteデータ保存用のディレクトリを作成
+        run: mkdir -p app/data
+
       - name: レンタルサーバーに `reviews.db` をアップロード
         env:
           LOLI_SFTP_HOST: ${{ secrets.LOLI_SFTP_HOST }}

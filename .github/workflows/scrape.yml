@@ -15,14 +15,18 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v3
 
-      - name: デバッグ -> 作業ディレクトリの確認
+      - name: デバッグ: 現在のディレクトリ構成を確認
         run: |
-          echo "現在のカレントディレクトリ:"
+          echo "✅ [INFO] Current Working Directory:"
           pwd
-          echo "ルートディレクトリの内容:"
-          ls -al
-          echo "dataディレクトリの内容（あれば表示）:"
-          ls -al data/ || echo "dataディレクトリが存在しません"
+          echo "✅ [INFO] Home Directory Structure:"
+          ls -al ~/
+          echo "✅ [INFO] Root Directory Structure:"
+          ls -al /
+          echo "✅ [INFO] Project Root Directory Structure:"
+          ls -al $GITHUB_WORKSPACE
+          echo "✅ [INFO] Checking data/ directory:"
+          ls -al $GITHUB_WORKSPACE/data || echo "❌ [ERROR] data/ directory does not exist!"
 
       - name: Python 環境をセットアップ
         uses: actions/setup-python@v4
@@ -33,22 +37,18 @@ jobs:
         run: pip install -r app/requirements.txt
 
       - name: SQLiteデータ保存用のディレクトリを作成
-        run: mkdir -p data
+        run: mkdir -p $GITHUB_WORKSPACE/data
 
       - name: スクレイピングを実行
         run: python app/scraper.py
 
-      - name: デバッグ -> reviews.db の存在を確認
+      - name: デバッグ: reviews.db の存在を確認
         run: |
-          echo "現在のカレントディレクトリ:"
-          pwd
-          echo "dataディレクトリの内容:"
-          ls -al data/ || echo "dataディレクトリが存在しません"
-          echo "reviews.db の存在チェック:"
-          if [ -f "data/reviews.db" ]; then
-            echo "reviews.db が正しく作成されています。"
+          echo "✅ [INFO] Checking reviews.db existence:"
+          if [ -f "$GITHUB_WORKSPACE/data/reviews.db" ]; then
+            echo "✅ [INFO] reviews.db found!"
           else
-            echo "エラー: reviews.db が見つかりません。"
+            echo "❌ [ERROR] reviews.db not found!"
             exit 1
           fi
 
@@ -63,5 +63,5 @@ jobs:
           set sftp:auto-confirm yes;
           open -p 2222 -u $LOLI_SFTP_USER,$LOLI_SFTP_PASSWORD sftp://$LOLI_SFTP_HOST;
           cd web/data;
-          put ./data/reviews.db reviews.db;
+          put $GITHUB_WORKSPACE/data/reviews.db reviews.db;
           bye"

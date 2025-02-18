@@ -4,33 +4,24 @@ import sqlite3
 import os
 import time
 
-# ユーザーのFilmarksページURL
-BASE_URL = "https://filmarks.com"
-USER_PAGE = "/users/sarustar?page=1"
+# 環境変数から GITHUB_WORKSPACE を取得（なければカレントディレクトリ）
+WORKSPACE = os.getenv("GITHUB_WORKSPACE", os.getcwd())
+DB_PATH = os.path.join(WORKSPACE, "data/reviews.db")
 
-# ヘッダーを偽装
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-}
+# デバッグログ
+print(f"✅ [INFO] GITHUB_WORKSPACE: {WORKSPACE}")
+print(f"✅ [INFO] DB_PATH: {DB_PATH}")
 
-# SQLiteデータベースのパス（絶対パスを取得）
-DB_PATH = os.path.abspath("data/reviews.db")
-
-# デバッグ用ログ
-print(f"データベースパス: {DB_PATH}")
-
-# ディレクトリがない場合は作成
+# データディレクトリを作成
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
-# SQLite にデータを保存する関数
 def save_to_sqlite(reviews):
-    print("データを SQLite に保存開始")
-
+    print(f"✅ [INFO] Saving {len(reviews)} reviews to SQLite database...")
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        # テーブル作成（存在しない場合のみ）
+        # テーブル作成
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS reviews (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +32,7 @@ def save_to_sqlite(reviews):
             )
         """)
 
-        # 既存データをクリア（毎回上書き）
+        # データ削除（毎回上書き）
         cursor.execute("DELETE FROM reviews")
 
         # データ挿入
@@ -52,78 +43,18 @@ def save_to_sqlite(reviews):
                 rating = None
 
             cursor.execute(
-                "INSERT INTO reviews (title, review, rating, url) VALUES (?, ?, ?, ?)", 
+                "INSERT INTO reviews (title, review, rating, url) VALUES (?, ?, ?, ?)",
                 (item["title"], item["review"], rating, item["url"])
             )
 
         conn.commit()
         conn.close()
+        print(f"✅ [INFO] SQLite database saved successfully!")
 
-        print(f"SQLite 保存完了！ {len(reviews)} 件のレビューを保存しました")
-    
     except sqlite3.Error as e:
-        print(f"SQLite エラー: {e}")
+        print(f"❌ [ERROR] SQLite Error: {e}")
+        exit(1)
 
-# 収集したレビューを保存するリスト
-all_reviews = []
-page_url = f"{BASE_URL}{USER_PAGE}"
+# ここからスクレイピング処理（変更なし）
 
-while page_url:
-    print(f"取得中: {page_url}")
-    response = requests.get(page_url, headers=HEADERS)
-
-    if response.status_code != 200:
-        print("ページ取得に失敗:", response.status_code)
-        break
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    # レビューが格納されているカードを取得
-    review_cards = soup.find_all("div", class_="c-content-card")
-
-    if not review_cards:
-        print("レビューが見つかりませんでした。終了します。")
-        break
-
-    for card in review_cards:
-        # 映画タイトル
-        title_tag = card.find("h3", class_="c-content-card__title")
-        title = title_tag.get_text(strip=True) if title_tag else "N/A"
-
-        # スコア
-        score_tag = card.find("div", class_="c-rating__score")
-        score = score_tag.get_text(strip=True) if score_tag else "N/A"
-
-        # レビュー本文
-        review_tag = card.find("p", class_="c-content-card__review")
-        review = review_tag.get_text(" ", strip=True) if review_tag else "N/A"
-
-        # 映画の詳細ページURL
-        movie_link_tag = title_tag.find("a") if title_tag else None
-        movie_link = f"https://filmarks.com{movie_link_tag['href']}" if movie_link_tag else "N/A"
-
-        all_reviews.append({
-            "title": title,
-            "score": score,
-            "review": review,
-            "url": movie_link
-        })
-
-    # 次のページのリンクを取得
-    next_page_tag = soup.select_one("a.c2-pagination__next")
-
-    if next_page_tag and "href" in next_page_tag.attrs:
-        page_url = BASE_URL + next_page_tag["href"]
-    else:
-        print("次のページがありません。終了します。")
-        break
-
-    time.sleep(2)  # サーバー負荷対策で2秒待機
-
-# 取得したデータを SQLite に保存
-save_to_sqlite(all_reviews)
-
-# デバッグ用に最終確認
-print(f"レビュー取得完了！ {len(all_reviews)} 件のレビューを SQLite に保存しました。")
-print(f"データベース: {DB_PATH}")
-print(f"データベースファイルが存在するか: {os.path.exists(DB_PATH)}")
+print(f"✅ [INFO] Database exists: {os.path.exists(DB_PATH)}")

@@ -15,7 +15,7 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v3
 
-      - name: デバッグ: 現在のディレクトリ構成を確認
+      - name: デバッグ -> 現在のディレクトリ構成を確認
         run: |
           echo "✅ [INFO] Current Working Directory:"
           pwd
@@ -42,7 +42,7 @@ jobs:
       - name: スクレイピングを実行
         run: python app/scraper.py
 
-      - name: デバッグ: reviews.db の存在を確認
+      - name: デバッグ -> reviews.db の存在を確認
         run: |
           echo "✅ [INFO] Checking reviews.db existence:"
           if [ -f "$GITHUB_WORKSPACE/data/reviews.db" ]; then

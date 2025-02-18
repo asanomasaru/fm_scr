@@ -15,6 +15,15 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v3
 
+      - name: デバッグ: 作業ディレクトリの確認
+        run: |
+          echo "現在のカレントディレクトリ:"
+          pwd
+          echo "ルートディレクトリの内容:"
+          ls -al
+          echo "dataディレクトリの内容（あれば表示）:"
+          ls -al data/ || echo "dataディレクトリが存在しません"
+
       - name: Python 環境をセットアップ
         uses: actions/setup-python@v4
         with:
@@ -29,6 +38,20 @@ jobs:
       - name: スクレイピングを実行
         run: python app/scraper.py
 
+      - name: デバッグ: reviews.db の存在を確認
+        run: |
+          echo "現在のカレントディレクトリ:"
+          pwd
+          echo "dataディレクトリの内容:"
+          ls -al data/ || echo "dataディレクトリが存在しません"
+          echo "reviews.db の存在チェック:"
+          if [ -f "data/reviews.db" ]; then
+            echo "reviews.db が正しく作成されています。"
+          else
+            echo "エラー: reviews.db が見つかりません。"
+            exit 1
+          fi
+
       - name: レンタルサーバーに `reviews.db` をアップロード
         env:
           LOLI_SFTP_HOST: ${{ secrets.LOLI_SFTP_HOST }}
@@ -40,5 +63,5 @@ jobs:
           set sftp:auto-confirm yes;
           open -p 2222 -u $LOLI_SFTP_USER,$LOLI_SFTP_PASSWORD sftp://$LOLI_SFTP_HOST;
           cd web/data;
-          put ../../data/reviews.db reviews.db;
+          put ./data/reviews.db reviews.db;
           bye"
